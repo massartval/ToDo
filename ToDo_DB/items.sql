@@ -1,0 +1,6 @@
+﻿CREATE TABLE [dbo].[items]
+(
+	[Id] INT NOT NULL IDENTITY PRIMARY KEY,
+	[Title] NVARCHAR(250) NOT NULL,
+	[IsCompleted] BIT NOT NULL DEFAULT 0
+)

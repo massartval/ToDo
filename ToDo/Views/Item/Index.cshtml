@@ -1,0 +1,80 @@
+﻿@model IEnumerable<ToDo_DAL.Models.Item>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                To do
+            </th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model) {
+
+            @if (item.IsCompleted == false)
+            {
+                <tr>
+                    <td>
+                        @Html.ActionLink(item.Title, "Edit", new {  id=item.Id })
+                    </td>
+                    <td>
+                        @using (Html.BeginForm("Toggle", "Item", new { id = item.Id }, FormMethod.Post))
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.CheckBox("IsCompleted", item.IsCompleted, new { onclick="this.form.submit();"})
+                        }
+                    </td>
+                    <td>
+                        @Html.ActionLink("Delete", "Delete", new { id=item.Id }, new {@class="text-danger"})
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Done
+            </th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            @if (item.IsCompleted == true)
+            {
+                <tr>
+                    <td>
+                        @Html.ActionLink(item.Title, "Edit", new {  id=item.Id }, new { @class="text-muted"})
+                    </td>
+                    <td>
+                        @using (Html.BeginForm("Toggle", "Item", new { id = item.Id }, FormMethod.Post))
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.CheckBox("IsCompleted", item.IsCompleted, new { onclick="this.form.submit();"})
+                        }
+                    </td>
+                    <td>
+                        @Html.ActionLink("Delete", "Delete", new { id=item.Id }, new {@class="text-danger"})
+
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
