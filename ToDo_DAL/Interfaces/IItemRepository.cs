@@ -1,18 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ToDo_DAL.Models;
+﻿using ToDo_DAL.Models;
 
 namespace ToDo_DAL.Interfaces
 {
     public interface IItemRepository
     {
-        Item GetById(int id);
         IEnumerable<Item> GetAll();
-        bool Create(Item item);
-        bool Update(Item item);
-        bool Delete(int id);
+        Item? GetById(int id);
+        Item Create(Item item);
+        Item? Update(Item item);
+        Item? Toggle(int id);
+        Item? Delete(int id);
     }
 }

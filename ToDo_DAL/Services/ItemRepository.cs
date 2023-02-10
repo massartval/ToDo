@@ -14,28 +14,10 @@ namespace ToDo_DAL.Services
             _connection = connection;
         }
 
-        public bool Create(Item item)
-        {
-            string sql = "INSERT INTO [items]([Title], [IsCompleted]) VALUES(@title, @status)";
-            Command command = new Command(sql, false);
-            command.AddParameter("title", item.Title);
-            command.AddParameter("status", item.IsCompleted);
-            int rows = _connection.ExecuteNonQuery(command);
-            return rows == 1;
-        }
-
-        public bool Delete(int id)
-        {
-            string sql = "DELETE FROM [items] WHERE [Id] = @id";
-            Command command = new Command(sql, false);
-            command.AddParameter("id", id);
-            int rows = _connection.ExecuteNonQuery(command);
-            return rows == 1;
-        }
-
+        #region SELECT
         public IEnumerable<Item> GetAll()
         {
-            string sql = "SELECT * FROM [items] ORDER BY [IsCompleted]";
+            string sql = "SELECT * FROM [items]";
             Command command = new Command(sql, false);
             return _connection.ExecuteReader(command, reader => reader.MapItem());
         }
@@ -47,16 +29,47 @@ namespace ToDo_DAL.Services
             command.AddParameter("id", id);
             return _connection.ExecuteReader(command, reader => reader.MapItem()).First();
         }
+        #endregion
 
-        public bool Update(Item item)
+        #region INSERT
+        public Item Create(Item item)
         {
-            string sql = "UPDATE [items] SET [Title] = @title, [IsCompleted] = @status WHERE [Id] = @id";
+            string sql = "INSERT INTO [items]([Title]) OUTPUT [inserted].* VALUES(@title)";
             Command command = new Command(sql, false);
             command.AddParameter("title", item.Title);
-            command.AddParameter("status", item.IsCompleted);
-            command.AddParameter("id", item.Id);
-            int rows = _connection.ExecuteNonQuery(command);
-            return rows == 2;
+            return _connection.ExecuteReader(command, reader => reader.MapItem()).Single();
         }
+        #endregion
+
+        #region UPDATE
+        public Item? Update(Item item)
+        {
+            string sql = "UPDATE [items] SET [Title] = @title, [IsCompleted] = @is_completed OUTPUT [inserted].* WHERE [Id] = @id";
+            Command command = new Command(sql, false);
+            command.AddParameter("title", item.Title);
+            command.AddParameter("is_completed", item.IsCompleted);
+            command.AddParameter("id", item.Id);
+            return _connection.ExecuteReader(command, reader => reader.MapItem()).SingleOrDefault();
+        }
+
+        public Item? Toggle(int id) 
+        {
+            string sql = "UPDATE [items] SET [IsCompleted] = ~[IsCompleted] OUTPUT [inserted].* WHERE [Id] = @id";
+            Command command = new Command(sql, false);
+            command.AddParameter("id", id);
+            return _connection.ExecuteReader(command, reader => reader.MapItem()).SingleOrDefault();
+        }
+
+        #endregion
+
+        #region DELETE
+        public Item? Delete(int id)
+        {
+            string sql = "DELETE FROM [items] OUTPUT [deleted].* WHERE [Id] = @id";
+            Command command = new Command(sql, false);
+            command.AddParameter("id", id);
+            return _connection.ExecuteReader(command, reader => reader.MapItem()).SingleOrDefault();
+        }
+        #endregion
     }
 }

@@ -1,6 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using System.Diagnostics;
 using ToDo.Models;
 using ToDo.Tools;
 using ToDo_DAL.Interfaces;
@@ -9,6 +7,7 @@ using ToDo_DAL.Models;
 
 namespace ToDo.Controllers
 {
+    [TypeFilter(typeof(ExceptionFilter))]
     public class ItemController : Controller
     {
         private readonly IItemRepository _repo;
@@ -18,60 +17,55 @@ namespace ToDo.Controllers
             _repo = repo;
         }
 
-        // Error handling
-        private ActionResult HandleException(Exception exception)
-        {
-            ErrorViewModel error = new ErrorViewModel() { ErrorMessage = exception.Message, RequestId = Activity.Current!.Id };
-            TempData["Error"] = JsonConvert.SerializeObject(error);
-            return RedirectToAction(nameof(ShowError));
-        }
-        public IActionResult ShowError()
-        {
-            if (TempData["Error"] is not null)
-            {
-                ErrorViewModel error = JsonConvert.DeserializeObject<ErrorViewModel>((string)TempData["Error"]!)!;
-                return View(error);
-            }
-            return View(new ErrorViewModel() { ErrorMessage = "REEEEEEEEEEEEEE!!!!!!!" });
-        }
+        // Error handling (NOW DONE BY THE FILTER)
+        //private ActionResult HandleException(Exception exception)
+        //{
+        //    ErrorViewModel error = new ErrorViewModel() { ErrorMessage = exception.Message, RequestId = Activity.Current!.Id };
+        //    TempData["Error"] = JsonConvert.SerializeObject(error);
+        //    return RedirectToAction(nameof(ShowError));
+        //}
+        //public IActionResult ShowError()
+        //{
+        //    if (TempData["Error"] is not null)
+        //    {
+        //        ErrorViewModel error = JsonConvert.DeserializeObject<ErrorViewModel>((string)TempData["Error"]!)!;
+        //        return View(error);
+        //    }
+        //    return View(new ErrorViewModel() { ErrorMessage = "REEEEEEEEEEEEEE!!!!!!!" });
+        //}
 
         // GET: ItemController
         public ActionResult Index()
         {
-            try
-            {
-                return View(_repo.GetAll());
-            }
-            catch (Exception exception)
-            {
-                return HandleException(exception);
-            }
+            return View(_repo.GetAll());
+            //try
+            //{
+            //    return View(_repo.GetAll());
+            //}
+            //catch (Exception exception)
+            //{
+            //    return HandleException(exception);
+            //}
         }
 
         // GET: ItemController/Details/5
         public ActionResult Details(int id)
         {
-            try
+            Item? item = _repo.GetById(id);
+            if (item is not null)
             {
-                return View(_repo.GetById(id));
+                return View(item);
             }
-            catch (Exception exception)
+            else
             {
-                return HandleException(exception);
+                return RedirectToAction(nameof(Index));
             }
         }
 
         // GET: ItemController/Create
         public ActionResult Create()
         {
-            try
-            {
-                return View();
-            }
-            catch (Exception exception)
-            {
-                return HandleException(exception);
-            }
+            return View();
         }
 
         // POST: ItemController/Create
@@ -79,33 +73,34 @@ namespace ToDo.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Create(ItemForm itemForm)
         {
-            try
-            {
-                if (!ModelState.IsValid) 
-                    return View(itemForm);
+            if (!ModelState.IsValid) 
+                return View(itemForm);
 
-                Item item = itemForm.MapItem();
-                _repo.Create(item);
+            Item item = itemForm.MapItem();
+            if (_repo.Create(item) is not null)
+            {
                 return RedirectToAction(nameof(Index));
             }
-            catch (Exception exception)
+            else
             {
-                return HandleException(exception);
+                ModelState.AddModelError("", "Something went wrong...");
+                return View(itemForm);
             }
         }
 
         // GET: ItemController/Edit/5
         public ActionResult Edit(int id)
         {
-            try
+            Item? item = _repo.GetById(id);
+
+            if (item is not null)
             {
-                Item item = _repo.GetById(id);
                 ItemForm itemForm = item.MapItemForm();
-                return View(itemForm);
+                return View(itemForm);  
             }
-            catch (Exception exception)
+            else
             {
-                return HandleException(exception);
+                return RedirectToAction(nameof(Index));
             }
         }
 
@@ -114,18 +109,20 @@ namespace ToDo.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Edit(int id, ItemForm itemForm)
         {
-            try
-            {
-                if (!ModelState.IsValid) 
-                    return View(itemForm);
+            if (!ModelState.IsValid) 
+                return View(itemForm);
+            if (id != itemForm.Id)
+                return RedirectToAction(nameof(Index));
 
-                Item item = itemForm.MapItem();
-                _repo.Update(item);
+            Item item = itemForm.MapItem();
+            if (_repo.Update(item) is not null)
+            {
                 return RedirectToAction(nameof(Index));
             }
-            catch (Exception exception)
+            else
             {
-                return HandleException(exception);
+            ModelState.AddModelError("", "Something went wrong...");
+            return View(itemForm);
             }
         }
 
@@ -134,30 +131,29 @@ namespace ToDo.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Toggle(int id, IFormCollection collection)
         {
-            try
+            if (_repo.Toggle(id) is not null)
             {
-                Item item = _repo.GetById(id);
-                item.IsCompleted = (item.IsCompleted == true) ? item.IsCompleted = false : item.IsCompleted = true;
-                _repo.Update(item);
                 return RedirectToAction(nameof(Index));
             }
-            catch (Exception exception)
+            else
             {
-                return HandleException(exception);
+                ModelState.AddModelError("", "Something went wrong...");
+                return View();
             }
         }
 
         // GET: ItemController/Delete/5
         public ActionResult Delete(int id)
         {
-            try
+            Item? item = _repo.GetById(id);
+
+            if (item is not null)
             {
-                Item item = _repo.GetById(id);
                 return View(item);
             }
-            catch (Exception exception)
+            else
             {
-                return HandleException(exception);
+                return RedirectToAction(nameof(Index));
             }
         }
 
@@ -166,14 +162,14 @@ namespace ToDo.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Delete(int id, IFormCollection collection)
         {
-            try
+            if (_repo.Delete(id) is not null)
             {
-                _repo.Delete(id);
                 return RedirectToAction(nameof(Index));
             }
-            catch (Exception exception)
+            else
             {
-                return HandleException(exception);
+                ModelState.AddModelError("", "Something went wrong...");
+                return View();
             }
         }
     }

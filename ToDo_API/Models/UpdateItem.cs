@@ -1,15 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Reflection;
-using ToDo_DAL.Models;
 
-namespace ToDo.Models
+namespace ToDo_API.Models
 {
-    public class ItemForm
+    public class UpdateItem
     {
         public int Id { get; set; }
+        public bool IsCompleted { get; set; }
         [Required]
         public string Title { get; set; }
-        [Required]
-        public bool IsCompleted { get; set; }
     }
 }

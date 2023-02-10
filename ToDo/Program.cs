@@ -1,4 +1,3 @@
-using System.Data.SqlClient;
 using ToDo_DAL.Interfaces;
 using ToDo_DAL.Services;
 using Tools.Ado;
@@ -7,7 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddTransient<Connection>(c => new Connection(
+builder.Services.AddTransient(c => new Connection(
     builder.Configuration.GetConnectionString("default")
     ));
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
